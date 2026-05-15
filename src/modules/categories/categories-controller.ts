@@ -1,0 +1,90 @@
+import { Request, Response } from "express";
+
+import asyncHandler from "../../shared/helpers/async-handler";
+
+import { successResponse } from "../../shared/helpers/response";
+
+import {
+  createCategoryService,
+  deleteCategoryService,
+  getCategoriesService,
+  getCategoryByIdService,
+  updateCategoryService,
+} from "./categories-service";
+
+export const createCategoryController =
+  asyncHandler(
+    async (req: Request, res: Response) => {
+      const category =
+        await createCategoryService(
+          req.body
+        );
+
+      successResponse(
+        res,
+        category,
+        "Category created",
+        201
+      );
+    }
+  );
+
+export const getCategoriesController =
+  asyncHandler(
+    async (req: Request, res: Response) => {
+      const categories =
+        await getCategoriesService();
+
+      successResponse(
+        res,
+        categories
+      );
+    }
+  );
+
+export const getCategoryByIdController =
+  asyncHandler(
+    async (req: Request, res: Response) => {
+      const category =
+        await getCategoryByIdService(
+          req.params.id as string
+        );
+
+      successResponse(
+        res,
+        category
+      );
+    }
+  );
+
+export const updateCategoryController =
+  asyncHandler(
+    async (req: Request, res: Response) => {
+      const category =
+        await updateCategoryService(
+          req.params.id as string,
+          req.body
+        );
+
+      successResponse(
+        res,
+        category,
+        "Category updated"
+      );
+    }
+  );
+
+export const deleteCategoryController =
+  asyncHandler(
+    async (req: Request, res: Response) => {
+      await deleteCategoryService(
+        req.params.id as string
+      );
+
+      successResponse(
+        res,
+        null,
+        "Category deleted"
+      );
+    }
+  );

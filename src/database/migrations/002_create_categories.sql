@@ -1,0 +1,9 @@
+CREATE TABLE categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    name VARCHAR(100) UNIQUE NOT NULL,
+
+    icon TEXT,
+
+    created_at TIMESTAMP DEFAULT NOW()
+);
