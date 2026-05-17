@@ -14,6 +14,7 @@ import {
 import { CreateReportDTO } from "./reports-types";
 import { db } from "../../database";
 import { storage } from "../../shared/utils/storage";
+import { notifyUser } from "../notifications/notifications-service";
 
 export async function createReportService(
   userId: string,
@@ -158,6 +159,15 @@ export async function updateStatusService(
       client
     );
 
+    if (report.user_id !== changedBy) {
+      await notifyUser({
+        user_id: report.user_id,
+        title: "Report Status Updated",
+        message: `Your report '${report.title}' status has changed to ${status.replace("_", " ")}.`,
+        type: "report_status",
+        reference_id: reportId,
+      }).catch(err => console.error("Failed to send notification:", err));
+    }
 
     return updatedReport;
   });

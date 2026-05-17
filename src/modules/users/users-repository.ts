@@ -16,6 +16,16 @@ export async function getUsers() {
   return result.rows;
 }
 
+export async function getAdmins() {
+  const query = `
+    SELECT id
+    FROM users
+    WHERE role IN ('admin', 'super_admin')
+  `;
+  const result = await pool.query(query);
+  return result.rows;
+}
+
 export async function getUserById(userId: string) {
   const query = `
     SELECT
