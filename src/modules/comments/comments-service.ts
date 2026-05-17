@@ -1,55 +1,17 @@
-import {
-  createComment,
-  deleteComment,
-  getCommentOwner,
-  getCommentsByReport,
-} from "./comments-repository";
+import { createComment, getCommentsByReportId, deleteComment } from "./comments-repository";
 
-export async function createCommentService(
+export async function addCommentToReport(
   reportId: string,
   userId: string,
-  message: string
+  content: string
 ) {
-  return createComment(
-    reportId,
-    userId,
-    message
-  );
+  return createComment(reportId, userId, content);
 }
 
-export async function getCommentsService(
-  reportId: string
-) {
-  return getCommentsByReport(reportId);
+export async function getReportComments(reportId: string) {
+  return getCommentsByReportId(reportId);
 }
 
-export async function deleteCommentService(
-  commentId: string,
-  userId: string,
-  userRole: string
-) {
-  const owner =
-    await getCommentOwner(commentId);
-
-  if (!owner) {
-    throw new Error(
-      "Comment not found"
-    );
-  }
-
-  const isOwner =
-    owner.user_id === userId;
-
-  const isAdmin = [
-    "admin",
-    "super_admin",
-  ].includes(userRole);
-
-  if (!isOwner && !isAdmin) {
-    throw new Error(
-      "You cannot delete this comment"
-    );
-  }
-
-  await deleteComment(commentId);
+export async function removeComment(id: string, userId: string) {
+  return deleteComment(id, userId);
 }

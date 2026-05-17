@@ -6,9 +6,9 @@ import {
 import {
   comparePassword,
   hashPassword,
-} from "../../shared/helpers/hash";
+} from "../../shared/utils/hash";
 
-import { generateToken } from "../../shared/helpers/jwt";
+import { generateToken } from "../../shared/utils/jwt";
 
 import {
   LoginDTO,

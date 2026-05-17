@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import asyncHandler from "../../shared/helpers/async-handler";
+import { asyncHandler } from "../../shared/utils/async-handler";
 
 import {
   loginService,
@@ -8,7 +8,7 @@ import {
   registerService,
 } from "./auth-service";
 
-import { successResponse } from "../../shared/helpers/response";
+import { successResponse } from "../../shared/utils/response";
 
 export const registerController =
   asyncHandler(

@@ -1,87 +1,43 @@
-import pool from "../../config/db";
+import { db } from "../../database";
 
 export async function createComment(
   reportId: string,
   userId: string,
-  message: string
+  content: string
 ) {
   const query = `
-    INSERT INTO comments (
-      report_id,
-      user_id,
-      message
-    )
-    VALUES ($1, $2, $3)
-
-    RETURNING *
+      INSERT INTO comments (report_id, user_id, message)
+      VALUES ($1, $2, $3)
+      RETURNING *
   `;
-
-  const values = [
-    reportId,
-    userId,
-    message,
-  ];
-
-  const result = await pool.query(
-    query,
-    values
-  );
-
+  const result = await db.query(query, [reportId, userId, content]);
   return result.rows[0];
 }
 
-export async function getCommentsByReport(
-  reportId: string
-) {
+export async function getCommentsByReportId(reportId: string) {
   const query = `
-    SELECT
+    SELECT 
       comments.id,
-      comments.message,
+      comments.message AS content,
       comments.created_at,
-
-      users.full_name,
+      comments.user_id,
+      users.full_name AS author_name,
       users.role
-
     FROM comments
-
-    JOIN users
-      ON comments.user_id = users.id
-
+    JOIN users ON comments.user_id = users.id
     WHERE comments.report_id = $1
-
-    ORDER BY comments.created_at ASC
+    ORDER BY comments.created_at DESC
   `;
-
-  const result = await pool.query(query, [
-    reportId,
-  ]);
-
+  const result = await db.query(query, [reportId]);
   return result.rows;
 }
 
-export async function deleteComment(
-  commentId: string
-) {
+export async function deleteComment(id: string, userId: string) {
   const query = `
-    DELETE FROM comments
-    WHERE id = $1
-  `;
-
-  await pool.query(query, [commentId]);
-}
-
-export async function getCommentOwner(
-  commentId: string
-) {
-  const query = `
-    SELECT user_id
-    FROM comments
-    WHERE id = $1
-  `;
-
-  const result = await pool.query(query, [
-    commentId,
-  ]);
-
+      DELETE FROM comments
+      WHERE id = $1 AND user_id = $2
+      RETURNING *
+    `;
+  const result = await db.query(query, [id, userId]);
   return result.rows[0];
 }

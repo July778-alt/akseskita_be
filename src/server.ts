@@ -1,7 +1,11 @@
 import app from "./app";
 
-import { env } from "./config/env";
+import { config } from "./config/env";
+import { initNotificationListeners } from "./modules/notifications/notifications-events";
 
-app.listen(env.PORT, () => {
-    console.log(`Server running on port ${env.PORT}`);
+// Start background listeners
+initNotificationListeners();
+
+app.listen(config.PORT, () => {
+    console.log(`Server running on port ${config.PORT}`);
 });

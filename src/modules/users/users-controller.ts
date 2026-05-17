@@ -1,81 +1,65 @@
 import { Request, Response } from "express";
-
-import asyncHandler from "../../shared/helpers/async-handler";
-
-import { successResponse } from "../../shared/helpers/response";
-
+import { asyncHandler } from "../../shared/utils/async-handler";
+import { successResponse } from "../../shared/utils/response";
 import {
   deleteUserService,
   getUserByIdService,
   getUsersService,
   updateProfileService,
+  updateRoleService,
 } from "./users-service";
 
-export const getUsersController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      const users =
-        await getUsersService();
+export const updateRoleController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { role } = req.body;
 
-      successResponse(
-        res,
-        users
-      );
-    }
-  );
+    const user = await updateRoleService(id, role);
 
-  export const getCurrentUserController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      const user =
-        await getUserByIdService(
-          req.user?.id as string
-        );
+    successResponse(res, user, "User role updated successfully");
+  }
+);
 
-      successResponse(
-        res,
-        user
-      );
-    }
-  );
+export const getUsersController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const query = { ...req.query };
+    
+    const { users, pagination } = await getUsersService(query);
 
-  export const updateProfileController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      const avatar =
-        req.file?.path || undefined;
+    successResponse(res, users, "Users retrieved", 200, {
+      page: pagination.page,
+      limit: pagination.limit,
+      total: pagination.total,
+      total_pages: pagination.total_pages,
+    });
+  }
+);
 
-      const user =
-        await updateProfileService(
-          req.user?.id as string,
+export const getCurrentUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const user = await getUserByIdService(req.user?.id as string);
 
-          {
-            ...req.body,
+    successResponse(res, user);
+  }
+);
 
-            profile_picture:
-              avatar,
-          }
-        );
+export const updateProfileController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const avatar = req.file?.path || undefined;
 
-      successResponse(
-        res,
-        user,
-        "Profile updated"
-      );
-    }
-  );
+    const user = await updateProfileService(req.user?.id as string, {
+      ...req.body,
+      profile_picture: avatar,
+    });
 
-  export const deleteUserController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      await deleteUserService(
-        req.params.id as string
-      );
+    successResponse(res, user, "Profile updated");
+  }
+);
 
-      successResponse(
-        res,
-        null,
-        "User deleted"
-      );
-    }
-  );
+export const deleteUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    await deleteUserService(req.params.id as string);
+
+    successResponse(res, null, "User deleted");
+  }
+);

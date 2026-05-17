@@ -1,7 +1,8 @@
-import pool from "../../config/db";
+import { db } from "../../database";
+import { PoolClient } from "pg";
 
 import { CreateReportDTO } from "./reports-types";
-import { getPagination } from "../../shared/helpers/pagination";
+import { getPagination } from "../../shared/utils/pagination";
 
 export async function createReport(
   userId: string,
@@ -36,7 +37,7 @@ export async function createReport(
     data.address || null,
   ];
 
-  const result = await pool.query(
+  const result = await db.query(
     query,
     values
   );
@@ -78,10 +79,10 @@ export async function getReports(
 
     FROM reports
 
-    JOIN users
+    LEFT JOIN users
       ON reports.user_id = users.id
 
-    JOIN categories
+    LEFT JOIN categories
       ON reports.category_id = categories.id
 
     WHERE 1=1
@@ -91,17 +92,15 @@ export async function getReports(
 
   let index = 1;
 
-  if (status) {
+  if (status && status !== "undefined" && status !== "null") {
     query += `
       AND reports.status = $${index}
     `;
-
     values.push(status);
-
     index++;
   }
 
-  if (category_id) {
+  if (category_id && category_id !== "undefined" && category_id !== "null") {
     query += `
       AND reports.category_id = $${index}
     `;
@@ -109,7 +108,7 @@ export async function getReports(
     index++;
   }
 
-  if (user_id) {
+  if (user_id && user_id !== "undefined" && user_id !== "null") {
     query += `
       AND reports.user_id = $${index}
     `;
@@ -153,7 +152,10 @@ export async function getReports(
     pagination.offset
   );
 
-  const result = await pool.query(
+  console.log("DEBUG: Running getReports query:", query);
+  console.log("DEBUG: Query values:", values);
+
+  const result = await db.query(
     query,
     values
   );
@@ -174,16 +176,16 @@ export async function getReportById(
 
     FROM reports
 
-    JOIN users
+    LEFT JOIN users
       ON reports.user_id = users.id
 
-    JOIN categories
+    LEFT JOIN categories
       ON reports.category_id = categories.id
 
     WHERE reports.id = $1
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     reportId,
   ]);
 
@@ -199,7 +201,7 @@ export async function getReportOwner(
     WHERE id = $1
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     reportId,
   ]);
 
@@ -263,7 +265,7 @@ export async function updateReport(
     reportId,
   ];
 
-  const result = await pool.query(
+  const result = await db.query(
     query,
     values
   );
@@ -279,7 +281,7 @@ export async function deleteReport(
     WHERE id = $1
   `;
 
-  await pool.query(query, [reportId]);
+  await db.query(query, [reportId]);
 }
 
 export async function countReports(
@@ -302,27 +304,23 @@ export async function countReports(
 
   let index = 1;
 
-  if (status) {
+  if (status && status !== "undefined" && status !== "null") {
     query += `
       AND status = $${index}
     `;
-
     values.push(status);
-
     index++;
   }
 
-  if (category_id) {
+  if (category_id && category_id !== "undefined" && category_id !== "null") {
     query += `
-      AND reports.category_id = $${index}
+      AND category_id = $${index}
     `;
-
     values.push(category_id);
-
     index++;
   }
 
-  if (user_id) {
+  if (user_id && user_id !== "undefined" && user_id !== "null") {
     query += `
       AND user_id = $${index}
     `;
@@ -342,9 +340,10 @@ export async function countReports(
     `;
 
     values.push(`%${search}%`);
+    index++;
   }
 
-  const result = await pool.query(
+  const result = await db.query(
     query,
     values
   );
@@ -356,21 +355,20 @@ export async function countReports(
 
 export async function updateReportStatus(
   reportId: string,
-  status: string
+  status: string,
+  client?: PoolClient
 ) {
   const query = `
     UPDATE reports
-
     SET
       status = $1,
       updated_at = NOW()
-
     WHERE id = $2
-
     RETURNING *
   `;
 
-  const result = await pool.query(query, [
+  const executor = client || db;
+  const result = await executor.query(query, [
     status,
     reportId,
   ]);
@@ -382,7 +380,8 @@ export async function createReportHistory(
   reportId: string,
   oldStatus: string,
   newStatus: string,
-  changedBy: string
+  changedBy: string,
+  client?: PoolClient
 ) {
   const query = `
     INSERT INTO report_histories (
@@ -391,7 +390,6 @@ export async function createReportHistory(
       new_status,
       changed_by
     )
-
     VALUES ($1, $2, $3, $4)
   `;
 
@@ -402,7 +400,8 @@ export async function createReportHistory(
     changedBy,
   ];
 
-  await pool.query(query, values);
+  const executor = client || db;
+  await executor.query(query, values);
 }
 
 export async function getReportHistories(
@@ -411,26 +410,18 @@ export async function getReportHistories(
   const query = `
     SELECT
       report_histories.id,
-
       report_histories.old_status,
-
       report_histories.new_status,
-
       report_histories.created_at,
-
       users.full_name
-
     FROM report_histories
-
     JOIN users
       ON report_histories.changed_by = users.id
-
     WHERE report_histories.report_id = $1
-
     ORDER BY report_histories.created_at ASC
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     reportId,
   ]);
 

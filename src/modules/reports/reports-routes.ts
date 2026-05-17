@@ -6,25 +6,23 @@ import {
   deleteReportController,
   updateReportController,
   getReportHistoriesController,
+  updateStatusController
 } from "./reports-controller";
 import { authMiddleware } from "../../middlewares/auth-middleware";
 import { validate } from "../../middlewares/validate-middleware";
 import { createReportSchema,updateReportSchema,updateStatusSchema } from "./reports-validation";
 import { upload } from "../../config/multer";
 import { roleMiddleware } from "../../middlewares/role-middleware";
-import { updateStatusController } from "./reports-controller";
+import { requireStaff } from "../../middlewares/auth-middleware";
+import { exportReportsCSV } from "./reports-export-controller";
 
 const router = Router();
 
-router.get(
-  "/",
-  getReportsController
-);
+router.get("/", getReportsController);
 
-router.get(
-  "/:id",
-  getReportByIdController
-);
+router.get("/export", authMiddleware, requireStaff, exportReportsCSV);
+
+router.get("/:id", getReportByIdController);
 
 
 router.post(

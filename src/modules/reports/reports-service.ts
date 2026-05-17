@@ -12,6 +12,8 @@ import {
 } from "./reports-repository";
 
 import { CreateReportDTO } from "./reports-types";
+import { db } from "../../database";
+import { storage } from "../../shared/utils/storage";
 
 export async function createReportService(
   userId: string,
@@ -30,7 +32,10 @@ export async function getReportsService(
     await countReports(queryParams);
 
   return {
-    reports,
+    reports: reports.map((r: any) => ({
+      ...r,
+      image_url: storage.getFileUrl(r.image_url),
+    })),
     pagination: {
       total,
       page: Number(
@@ -62,7 +67,10 @@ export async function getReportByIdService(
     throw new Error("Report not found");
   }
 
-  return report;
+  return {
+    ...report,
+    image_url: storage.getFileUrl(report.image_url),
+  };
 }
 
 export async function updateReportService(
@@ -129,27 +137,30 @@ export async function updateStatusService(
   status: string,
   changedBy: string
 ) {
-  const report =
-    await getReportById(reportId);
+  return await db.transaction(async (client) => {
+    const report = await getReportById(reportId);
 
-  if (!report) {
-    throw new Error("Report not found");
-  }
+    if (!report) {
+      throw new Error("Report not found");
+    }
 
-  const updatedReport =
-    await updateReportStatus(
+    const updatedReport = await updateReportStatus(
       reportId,
-      status
+      status,
+      client
     );
 
-  await createReportHistory(
-    reportId,
-    report.status,
-    status,
-    changedBy
-  );
+    await createReportHistory(
+      reportId,
+      report.status,
+      status,
+      changedBy,
+      client
+    );
 
-  return updatedReport;
+
+    return updatedReport;
+  });
 }
 
 export async function getReportHistoriesService(

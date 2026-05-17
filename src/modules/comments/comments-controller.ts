@@ -1,66 +1,53 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import { addCommentToReport, getReportComments, removeComment } from "./comments-service";
+import { errorNotFound, errorResponse, successResponse } from "../../shared/utils/response";
 
-import asyncHandler from "../../shared/helpers/async-handler";
+export async function addComment(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { reportId } = req.params;
+    const { content } = req.body;
+    const userId = req.user!.id;
 
-import { successResponse } from "../../shared/helpers/response";
+    const comment = await addCommentToReport(reportId as string, userId, content);
 
-import {
-  createCommentService,
-  deleteCommentService,
-  getCommentsService,
-} from "./comments-service";
-
-export const createCommentController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      const comment =
-        await createCommentService(
-          req.params.reportId as string,
-
-          req.user?.id as string,
-
-          req.body.message
-        );
-
-      successResponse(
-        res,
-        comment,
-        "Comment created",
-        201
-      );
+    if (!comment) {
+      return errorResponse(res, "Failed to add comment");
     }
-  );
 
-export const getCommentsController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      const comments =
-        await getCommentsService(
-          req.params.reportId as string
-        );
+    return successResponse(res, comment, "Comment added successfully", 201);
+  } catch (error) {
+    next(error);
+  }
+}
 
-      successResponse(
-        res,
-        comments
-      );
+export async function getComments(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { reportId } = req.params;
+    const comments = await getReportComments(reportId as string);
+
+    if (!comments) {
+      return errorNotFound(res, "Comments not found");
     }
-  );
 
-export const deleteCommentController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      await deleteCommentService(
-        req.params.id as string,
+    return successResponse(res, comments, "Comments fetched successfully");
+  } catch (error) {
+    next(error);
+  }
+}
 
-        req.user?.id as string,
+export async function deleteCommentController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
 
-        req.user?.role as string
-      );
+    const deleted = await removeComment(id as string, userId);
 
-      successResponse(
-        res,
-        null,
-        "Comment deleted"
-      );
+    if (!deleted) {
+      return errorNotFound(res, "Comment not found or unauthorized");
     }
-  );
+
+    return successResponse(res, null, "Comment deleted successfully");
+  } catch (error) {
+    next(error);
+  }
+}

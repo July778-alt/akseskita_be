@@ -3,35 +3,29 @@ import pool from "../../config/db";
 export async function categoriesSeed() {
   const query = `
     INSERT INTO categories (
-      name,
-      icon
+      name
     )
 
     VALUES
 
     (
-      'Jalan Rusak',
-      'road'
+      'Jalan Rusak'
     ),
 
     (
-      'Trotoar Rusak',
-      'footprints'
+      'Trotoar Rusak'
     ),
 
     (
-      'Zebra Cross',
-      'square'
+      'Zebra Cross'
     ),
 
     (
-      'Fasilitas Disabilitas',
-      'accessibility'
+      'Fasilitas Disabilitas'
     ),
 
     (
-      'Lampu Lalu Lintas',
-      'traffic-light'
+      'Lampu Lalu Lintas'
     )
 
     ON CONFLICT (name)

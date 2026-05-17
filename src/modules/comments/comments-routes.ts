@@ -1,40 +1,23 @@
 import { Router } from "express";
-
-import {
-  createCommentController,
-  deleteCommentController,
-  getCommentsController,
-} from "./comments-controller";
-
+import { addComment, getComments, deleteCommentController } from "./comments-controller";
 import { authMiddleware } from "../../middlewares/auth-middleware";
-
 import { validate } from "../../middlewares/validate-middleware";
-
-import { createCommentSchema } from "./comments-validation";
+import { createCommentSchema } from "./comments-schemas";
 
 const router = Router();
 
-router.get(
-  "/report/:reportId",
-  getCommentsController
-);
+// Get comments for a report (Public/Auth)
+router.get("/reports/:reportId/comments", getComments);
 
+// Add comment to a report (Authenticated)
 router.post(
-  "/report/:reportId",
-
+  "/reports/:reportId/comments",
   authMiddleware,
-
   validate(createCommentSchema),
-
-  createCommentController
+  addComment
 );
 
-router.delete(
-  "/:id",
-
-  authMiddleware,
-
-  deleteCommentController
-);
+// Delete a comment (Authenticated, Owner only check in controller)
+router.delete("/comments/:id", authMiddleware, deleteCommentController);
 
 export default router;

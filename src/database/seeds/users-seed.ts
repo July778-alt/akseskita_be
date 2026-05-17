@@ -1,6 +1,6 @@
-import pool from "../../config/db";
-
+import { db } from "../index";
 import bcrypt from "bcrypt";
+import { config } from "../../config/env";
 
 export async function usersSeed() {
   const password =
@@ -36,7 +36,7 @@ export async function usersSeed() {
     DO NOTHING
   `;
 
-  await pool.query(query, [password]);
+  await db.query(query, [password]);
 
   console.log(
     "Users seed completed"

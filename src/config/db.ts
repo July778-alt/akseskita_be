@@ -1,12 +1,11 @@
+// c:\laragon\www\CodeH\AksesKita\be\src\config\db.ts
+
 import { Pool } from "pg";
-import { env } from "./env";
+import { config } from "./env"; // Change 'env' to 'config'
 
 const pool = new Pool({
-  host: env.DB_HOST,
-  port: env.DB_PORT,
-  user: env.DB_USER,
-  password: env.DB_PASSWORD,
-  database: env.DB_NAME,
+  // Use the validated connection string from your new config
+  connectionString: config.DATABASE_URL,
 });
 
 export default pool;
