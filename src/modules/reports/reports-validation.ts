@@ -10,14 +10,6 @@ export const createReportSchema = z.object({
   address: z.string().optional(),
 });
 
-export const updateReportSchema = z.object({
-  title: z.string().min(5).optional(),
-  description: z.string().min(10).optional(),
-  category_id: z.string().uuid().optional(),
-  latitude: z.coerce.number().optional(),
-  longitude: z.coerce.number().optional(),
-  address: z.string().optional(),
-});
 
 export const updateStatusSchema = z.object({
   status: z.enum([

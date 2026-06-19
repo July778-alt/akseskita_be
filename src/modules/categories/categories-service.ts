@@ -18,21 +18,6 @@ export async function getCategoriesService() {
   return getCategories();
 }
 
-export async function getCategoryByIdService(
-  categoryId: string
-) {
-  const category =
-    await getCategoryById(categoryId);
-
-  if (!category) {
-    throw new Error(
-      "Category not found"
-    );
-  }
-
-  return category;
-}
-
 export async function updateCategoryService(
   categoryId: string,
   data: any

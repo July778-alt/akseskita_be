@@ -9,11 +9,8 @@ import {
 
 import {
   loginController,
-  meController,
   registerController,
 } from "./auth-controller";
-
-import { authMiddleware } from "../../middlewares/auth-middleware";
 
 
 const router = Router();
@@ -28,12 +25,6 @@ router.post(
   "/login",
   validate(loginSchema),
   loginController
-);
-
-router.get(
-  "/me",
-  authMiddleware,
-  meController
 );
 
 export default router;

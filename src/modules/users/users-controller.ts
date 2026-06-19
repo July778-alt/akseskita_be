@@ -58,7 +58,11 @@ export const updateProfileController = asyncHandler(
 
 export const deleteUserController = asyncHandler(
   async (req: Request, res: Response) => {
-    await deleteUserService(req.params.id as string);
+    await deleteUserService(
+      req.params.id as string,
+      req.user?.id as string,
+      req.user?.role as string
+    );
 
     successResponse(res, null, "User deleted");
   }

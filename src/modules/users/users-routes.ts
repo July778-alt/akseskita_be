@@ -26,7 +26,7 @@ router.put(
 
 router.get("/", authMiddleware, roleMiddleware(["admin", "super_admin"]), getUsersController);
 
-router.delete("/:id", authMiddleware, roleMiddleware(["super_admin"]), deleteUserController);
+router.delete("/:id", authMiddleware, roleMiddleware(["admin", "super_admin"]), deleteUserController);
 
 router.patch(
   "/:id/role",

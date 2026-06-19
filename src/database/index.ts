@@ -1,12 +1,13 @@
 import { Pool, PoolClient } from "pg";
 import { config } from "../config/env";
+import { logger } from "../config/logger";
 
 const pool = new Pool({
   connectionString: config.DATABASE_URL,
 });
 
 pool.on("error", (err) => {
-  console.error("❌ Unexpected error on idle client", err);
+  logger.error("❌ Unexpected error on idle client", err);
   process.exit(-1);
 });
 
@@ -17,8 +18,8 @@ export const db = {
     const duration = Date.now() - start;
     
     if (config.NODE_ENV === "development") {
-      // Optional: Log query duration
-      // console.log("executed query", { text, duration, rows: res.rowCount });
+      // Log query details cleanly in development
+      logger.debug(`SQL Query: ${text.trim().replace(/\s+/g, " ")} | Duration: ${duration}ms | Rows: ${res.rowCount}`);
     }
     
     return res;

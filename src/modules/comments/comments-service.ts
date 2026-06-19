@@ -1,7 +1,8 @@
-import { createComment, getCommentsByReportId, deleteComment } from "./comments-repository";
+import { createComment, getCommentsByReportId, deleteComment, getCommentById } from "./comments-repository";
 import { notifyUser } from "../notifications/notifications-service";
 import { getReportOwner } from "../reports/reports-repository";
 import { getAdmins, getUserById } from "../users/users-repository";
+import { storage } from "../../shared/utils/storage";
 
 export async function addCommentToReport(
   reportId: string,
@@ -37,12 +38,21 @@ export async function addCommentToReport(
       }).catch(err => console.error("Failed to notify admin:", err));
     }
   }
+  // Fetch fully populated comment with user details
+  const populatedComment = await getCommentById(comment.id);
+  if (populatedComment) {
+    populatedComment.author_avatar = storage.getFileUrl(populatedComment.author_avatar);
+  }
   
-  return comment;
+  return populatedComment;
 }
 
 export async function getReportComments(reportId: string) {
-  return getCommentsByReportId(reportId);
+  const comments = await getCommentsByReportId(reportId);
+  return comments.map((comment: any) => ({
+    ...comment,
+    author_avatar: storage.getFileUrl(comment.author_avatar),
+  }));
 }
 
 export async function removeComment(id: string, userId: string) {

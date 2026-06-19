@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
+import { logger } from "../config/logger";
 
 /**
  * Global Error Handler Middleware
@@ -29,7 +30,7 @@ export function errorMiddleware(
 
   // Log server errors for debugging
   if (statusCode === 500) {
-    console.error(`[Server Error] ${req.method} ${req.path}:`, error);
+    logger.error(`[Server Error] ${req.method} ${req.path}:`, error);
   }
 
   return res.status(statusCode).json({

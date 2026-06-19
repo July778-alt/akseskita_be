@@ -57,3 +57,23 @@ export async function markAllAsRead(userId: string) {
   await db.query(query, [userId]);
   return true;
 }
+
+export async function deleteNotification(id: string, userId: string) {
+  const query = `
+    DELETE FROM notifications
+    WHERE id = $1 AND user_id = $2
+    RETURNING *
+  `;
+  const result = await db.query(query, [id, userId]);
+  return result.rows[0];
+}
+
+export async function deleteAllNotifications(userId: string) {
+  const query = `
+    DELETE FROM notifications
+    WHERE user_id = $1
+  `;
+  await db.query(query, [userId]);
+  return true;
+}
+

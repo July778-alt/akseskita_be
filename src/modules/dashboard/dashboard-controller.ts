@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 
-import asyncHandler from "../../shared/helpers/async-handler";
+import { asyncHandler } from "../../shared/utils/async-handler";
 
-import { successResponse } from "../../shared/helpers/response";
+import { successResponse } from "../../shared/utils/response";
 
 import { getDashboardService } from "./dashboard-service";
 

@@ -151,10 +151,7 @@ export async function getReports(
     pagination.limit,
     pagination.offset
   );
-
-  console.log("DEBUG: Running getReports query:", query);
-  console.log("DEBUG: Query values:", values);
-
+  
   const result = await db.query(
     query,
     values
@@ -208,70 +205,6 @@ export async function getReportOwner(
   return result.rows[0];
 }
 
-export async function updateReport(
-  reportId: string,
-  data: any
-) {
-  const query = `
-    UPDATE reports
-    SET
-      title = COALESCE($1, title),
-
-      description = COALESCE(
-        $2,
-        description
-      ),
-
-      category_id = COALESCE(
-        $3,
-        category_id
-      ),
-
-      image_url = COALESCE(
-        $4,
-        image_url
-      ),
-
-      latitude = COALESCE(
-        $5,
-        latitude
-      ),
-
-      longitude = COALESCE(
-        $6,
-        longitude
-      ),
-
-      address = COALESCE(
-        $7,
-        address
-      ),
-
-      updated_at = NOW()
-
-    WHERE id = $8
-
-    RETURNING *
-  `;
-
-  const values = [
-    data.title,
-    data.description,
-    data.category_id,
-    data.image_url,
-    data.latitude,
-    data.longitude,
-    data.address,
-    reportId,
-  ];
-
-  const result = await db.query(
-    query,
-    values
-  );
-
-  return result.rows[0];
-}
 
 export async function deleteReport(
   reportId: string
@@ -374,56 +307,4 @@ export async function updateReportStatus(
   ]);
 
   return result.rows[0];
-}
-
-export async function createReportHistory(
-  reportId: string,
-  oldStatus: string,
-  newStatus: string,
-  changedBy: string,
-  client?: PoolClient
-) {
-  const query = `
-    INSERT INTO report_histories (
-      report_id,
-      old_status,
-      new_status,
-      changed_by
-    )
-    VALUES ($1, $2, $3, $4)
-  `;
-
-  const values = [
-    reportId,
-    oldStatus,
-    newStatus,
-    changedBy,
-  ];
-
-  const executor = client || db;
-  await executor.query(query, values);
-}
-
-export async function getReportHistories(
-  reportId: string
-) {
-  const query = `
-    SELECT
-      report_histories.id,
-      report_histories.old_status,
-      report_histories.new_status,
-      report_histories.created_at,
-      users.full_name
-    FROM report_histories
-    JOIN users
-      ON report_histories.changed_by = users.id
-    WHERE report_histories.report_id = $1
-    ORDER BY report_histories.created_at ASC
-  `;
-
-  const result = await db.query(query, [
-    reportId,
-  ]);
-
-  return result.rows;
 }

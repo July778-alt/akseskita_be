@@ -3,7 +3,5 @@ CREATE TABLE categories (
 
     name VARCHAR(100) UNIQUE NOT NULL,
 
-    icon TEXT,
-
     created_at TIMESTAMP DEFAULT NOW()
 );

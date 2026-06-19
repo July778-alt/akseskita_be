@@ -28,3 +28,11 @@ export async function readNotification(id: string, userId: string) {
 export async function readAllNotifications(userId: string) {
   return repo.markAllAsRead(userId);
 }
+
+export async function removeNotification(id: string, userId: string) {
+  return repo.deleteNotification(id, userId);
+}
+
+export async function removeAllNotifications(userId: string) {
+  return repo.deleteAllNotifications(userId);
+}

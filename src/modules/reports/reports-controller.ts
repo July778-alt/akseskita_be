@@ -6,9 +6,7 @@ import {
   getReportByIdService,
   getReportsService,
   deleteReportService,
-  updateReportService,
   updateStatusService,
-  getReportHistoriesService,
 } from "./reports-service";
 
 export const createReportController = asyncHandler(
@@ -52,23 +50,6 @@ export const getReportByIdController = asyncHandler(
   }
 );
 
-export const updateReportController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const image = req.file?.path || undefined;
-
-    const report = await updateReportService(
-      req.params.id as string,
-      req.user?.id as string,
-      req.user?.role as string,
-      {
-        ...req.body,
-        image_url: image,
-      }
-    );
-
-    successResponse(res, report, "Report updated");
-  }
-);
 
 export const deleteReportController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -91,13 +72,5 @@ export const updateStatusController = asyncHandler(
     );
 
     successResponse(res, report, "Status updated");
-  }
-);
-
-export const getReportHistoriesController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const histories = await getReportHistoriesService(req.params.id as string);
-
-    successResponse(res, histories);
   }
 );

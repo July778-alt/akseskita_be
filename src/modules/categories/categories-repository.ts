@@ -7,18 +7,16 @@ export async function createCategory(
 ) {
   const query = `
     INSERT INTO categories (
-      name,
-      icon
+      name
     )
 
-    VALUES ($1, $2)
+    VALUES ($1)
 
     RETURNING *
   `;
 
   const values = [
     data.name,
-    data.icon || null,
   ];
 
   const result = await pool.query(
@@ -66,18 +64,15 @@ export async function updateCategory(
     UPDATE categories
 
     SET
-      name = COALESCE($1, name),
+      name = COALESCE($1, name)
 
-      icon = COALESCE($2, icon)
-
-    WHERE id = $3
+    WHERE id = $2
 
     RETURNING *
   `;
 
   const values = [
     data.name,
-    data.icon,
     categoryId,
   ];
 

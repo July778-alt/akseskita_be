@@ -8,7 +8,6 @@ import {
   createCategoryService,
   deleteCategoryService,
   getCategoriesService,
-  getCategoryByIdService,
   updateCategoryService,
 } from "./categories-service";
 
@@ -38,21 +37,6 @@ export const getCategoriesController =
       successResponse(
         res,
         categories
-      );
-    }
-  );
-
-export const getCategoryByIdController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      const category =
-        await getCategoryByIdService(
-          req.params.id as string
-        );
-
-      successResponse(
-        res,
-        category
       );
     }
   );

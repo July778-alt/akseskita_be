@@ -46,3 +46,28 @@ export const markAllRead = asyncHandler(async (req: Request, res: Response) => {
   
   return successResponse(res, null, "All notifications marked as read");
 });
+
+export const deleteNotificationController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+  
+  const result = await service.removeNotification(id as string, userId);
+
+  if(!result) {
+    return errorResponse(res, "Failed to delete notification or notification not found", 404);
+  }
+  
+  return successResponse(res, null, "Notification deleted successfully");
+});
+
+export const deleteAllNotificationsController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  
+  const result = await service.removeAllNotifications(userId);
+
+  if(!result) {
+    return errorResponse(res, "Failed to delete all notifications");
+  }
+  
+  return successResponse(res, null, "All notifications deleted successfully");
+});

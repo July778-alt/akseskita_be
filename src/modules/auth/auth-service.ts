@@ -15,7 +15,8 @@ import {
   RegisterDTO,
 } from "./auth-types";
 
-import { findUserById } from "./auth-repository";
+
+import { storage } from "../../shared/utils/storage";
 
 export async function registerService(
   data: RegisterDTO
@@ -43,7 +44,10 @@ export async function registerService(
   });
 
   return {
-    user,
+    user: {
+      ...user,
+      profile_picture: storage.getFileUrl(user.profile_picture),
+    },
     token,
   };
 }
@@ -80,20 +84,9 @@ export async function loginService(
       full_name: user.full_name,
       email: user.email,
       role: user.role,
+      profile_picture: storage.getFileUrl(user.profile_picture),
     },
 
     token,
   };
-}
-
-export async function meService(
-  userId: string
-) {
-  const user = await findUserById(userId);
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return user;
 }

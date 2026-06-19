@@ -4,7 +4,6 @@ import { asyncHandler } from "../../shared/utils/async-handler";
 
 import {
   loginService,
-  meService,
   registerService,
 } from "./auth-service";
 
@@ -37,20 +36,6 @@ export const loginController =
         res,
         result,
         "Login success"
-      );
-    }
-  );
-
-export const meController =
-  asyncHandler(
-    async (req: Request, res: Response) => {
-      const user = await meService(
-        req.user?.id as string
-      );
-
-    successResponse(
-        res,
-        user
       );
     }
   );

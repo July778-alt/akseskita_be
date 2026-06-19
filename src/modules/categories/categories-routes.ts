@@ -4,7 +4,6 @@ import {
   createCategoryController,
   deleteCategoryController,
   getCategoriesController,
-  getCategoryByIdController,
   updateCategoryController,
 } from "./categories-controller";
 
@@ -24,11 +23,6 @@ const router = Router();
 router.get(
   "/",
   getCategoriesController
-);
-
-router.get(
-  "/:id",
-  getCategoryByIdController
 );
 
 router.post(

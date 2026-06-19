@@ -69,11 +69,19 @@ export async function updateProfileService(userId: string, data: any) {
   };
 }
 
-export async function deleteUserService(userId: string) {
+export async function deleteUserService(userId: string, currentUserId: string, currentUserRole: string) {
+  if (userId === currentUserId) {
+    throw new Error("You cannot delete your own account");
+  }
+
   const user = await getUserById(userId);
 
   if (!user) {
     throw new Error("User not found");
+  }
+
+  if (currentUserRole === "admin" && (user.role === "admin" || user.role === "super_admin")) {
+    throw new Error("Admins can only delete regular users");
   }
 
   await deleteUser(userId);

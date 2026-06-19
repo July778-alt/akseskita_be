@@ -5,11 +5,10 @@ import {
   getReports,
   deleteReport,
   getReportOwner,
-  updateReport,
-  createReportHistory,
   updateReportStatus,
-  getReportHistories,
 } from "./reports-repository";
+
+import { createReportHistory } from "../report-histories/report-histories-repository";
 
 import { CreateReportDTO } from "./reports-types";
 import { db } from "../../database";
@@ -74,35 +73,6 @@ export async function getReportByIdService(
   };
 }
 
-export async function updateReportService(
-  reportId: string,
-  userId: string,
-  userRole: string,
-  data: any
-) {
-  const reportOwner =
-    await getReportOwner(reportId);
-
-  if (!reportOwner) {
-    throw new Error("Report not found");
-  }
-
-  const isOwner =
-    reportOwner.user_id === userId;
-
-  const isAdmin = [
-    "admin",
-    "super_admin",
-  ].includes(userRole);
-
-  if (!isOwner && !isAdmin) {
-    throw new Error(
-      "You cannot edit this report"
-    );
-  }
-
-  return updateReport(reportId, data);
-}
 
 export async function deleteReportService(
   reportId: string,
@@ -145,6 +115,26 @@ export async function updateStatusService(
       throw new Error("Report not found");
     }
 
+    // Tingkatan status (Rank) untuk mencegah penurunan status (downgrade)
+    // pending (1) -> verified (2) -> in_progress (3) -> resolved / rejected (4)
+    const STATUS_RANKS: Record<string, number> = {
+      pending: 1,
+      verified: 2,
+      in_progress: 3,
+      resolved: 4,
+      rejected: 4,
+    };
+
+    const currentRank = STATUS_RANKS[report.status] || 0;
+    const newRank = STATUS_RANKS[status] || 0;
+
+    // Jika status baru lebih rendah atau sama dengan status saat ini, tolak!
+    if (newRank <= currentRank) {
+      throw new Error(
+        `Tidak dapat mengubah status dari '${report.status}' menjadi '${status}'. Status laporan hanya boleh maju ke tahap berikutnya.`
+      );
+    }
+
     const updatedReport = await updateReportStatus(
       reportId,
       status,
@@ -152,10 +142,12 @@ export async function updateStatusService(
     );
 
     await createReportHistory(
-      reportId,
-      report.status,
-      status,
-      changedBy,
+      {
+        report_id: reportId,
+        old_status: report.status,
+        new_status: status,
+        changed_by: changedBy,
+      },
       client
     );
 
@@ -171,10 +163,4 @@ export async function updateStatusService(
 
     return updatedReport;
   });
-}
-
-export async function getReportHistoriesService(
-  reportId: string
-) {
-  return getReportHistories(reportId);
 }

@@ -5,10 +5,10 @@ import { errorNotFound, errorResponse, successResponse } from "../../shared/util
 export async function addComment(req: Request, res: Response, next: NextFunction) {
   try {
     const { reportId } = req.params;
-    const { content } = req.body;
+    const { message } = req.body;
     const userId = req.user!.id;
 
-    const comment = await addCommentToReport(reportId as string, userId, content);
+    const comment = await addCommentToReport(reportId as string, userId, message);
 
     if (!comment) {
       return errorResponse(res, "Failed to add comment");

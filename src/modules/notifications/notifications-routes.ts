@@ -9,5 +9,7 @@ router.use(authMiddleware);
 router.get("/", controller.getMyNotifications);
 router.patch("/mark-all-read", controller.markAllRead);
 router.patch("/:id/read", controller.markRead);
+router.delete("/clear-all", controller.deleteAllNotificationsController);
+router.delete("/:id", controller.deleteNotificationController);
 
 export default router;

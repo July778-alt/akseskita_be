@@ -1,7 +1,19 @@
 import pool from "../../config/db";
+import { getPagination } from "../../shared/utils/pagination";
 
-export async function getUsers() {
-  const query = `
+export async function getUsers(queryParams: any = {}) {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+  } = queryParams;
+
+  const pagination = getPagination(
+    Number(page),
+    Number(limit)
+  );
+
+  let query = `
     SELECT
       id,
       full_name,
@@ -10,9 +22,36 @@ export async function getUsers() {
       profile_picture,
       created_at
     FROM users
-    ORDER BY created_at DESC
+    WHERE 1=1
   `;
-  const result = await pool.query(query);
+
+  const values: any[] = [];
+  let index = 1;
+
+  if (search) {
+    query += `
+      AND (
+        full_name ILIKE $${index}
+        OR
+        email ILIKE $${index}
+      )
+    `;
+    values.push(`%${search}%`);
+    index++;
+  }
+
+  query += `
+    ORDER BY created_at DESC
+    LIMIT $${index}
+    OFFSET $${index + 1}
+  `;
+
+  values.push(
+    pagination.limit,
+    pagination.offset
+  );
+
+  const result = await pool.query(query, values);
   return result.rows;
 }
 
@@ -78,11 +117,30 @@ export async function updateUserRole(userId: string, role: string) {
   return result.rows[0];
 }
 
-export async function countUsers() {
-  const query = `
+export async function countUsers(queryParams: any = {}) {
+  const { search } = queryParams;
+
+  let query = `
     SELECT COUNT(*)
     FROM users
+    WHERE 1=1
   `;
-  const result = await pool.query(query);
+
+  const values: any[] = [];
+  let index = 1;
+
+  if (search) {
+    query += `
+      AND (
+        full_name ILIKE $${index}
+        OR
+        email ILIKE $${index}
+      )
+    `;
+    values.push(`%${search}%`);
+    index++;
+  }
+
+  const result = await pool.query(query, values);
   return parseInt(result.rows[0].count);
 }

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { logger } from "./config/logger";
 import routes from "./routes";
 import { apiLimiter } from "./config/rate-limit";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware";
@@ -17,11 +18,12 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: config.CLIENT_URL,
+  origin: true, // Allow all origins for dev/Expo Web
   credentials: true,
 }));
 
-app.use(morgan("dev"));
+// Route HTTP request logs through our custom logger
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev", { stream: logger.stream }));
 
 app.use(express.json());
 
