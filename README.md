@@ -18,8 +18,6 @@ Backend ini melayani permintaan klien dari **AksesKita Web** (Next.js) dan **Aks
 - [Akun Bawaan (Seed Data)](#akun-bawaan-seed-data)
 - [Dokumentasi Endpoint API](#dokumentasi-endpoint-api)
 - [Format Respon Standar](#format-respon-standar)
-- [Deployment dan Production (PM2)](#deployment-dan-production-pm2)
-- [Lisensi](#lisensi)
 
 ---
 
