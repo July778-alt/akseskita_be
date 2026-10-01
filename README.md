@@ -1,575 +1,415 @@
-# AksesKita Backend
+# AksesKita Backend (REST API)
 
-Backend REST API for **AksesKita**, a public accessibility reporting platform that allows users to report accessibility issues in public spaces, while administrators can manage, verify, and update reported cases.
+[![Node.js](https://img.shields.io/badge/Node.js-18+-68a063?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![JWT](https://img.shields.io/badge/JWT-Secure_Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
+[![PM2](https://img.shields.io/badge/PM2-Cluster_Ready-2B037A?style=for-the-badge&logo=pm2&logoColor=white)](https://pm2.keymetrics.io/)
 
-AksesKita is designed to help document accessibility problems such as missing tactile paving, inadequate pedestrian crossings, damaged sidewalks, potholes, and other public infrastructure issues.
+Backend RESTful API untuk **AksesKita** — platform pelaporan fasilitas publik dan infrastruktur ramah disabilitas/aksesibilitas kota (seperti guiding block/tactile paving rusak, trotoar tidak layak, jalan berlubang, lampu penyeberangan mati, ramp kursi roda, dan fasilitas publik lainnya).
 
----
-
-## Overview
-
-AksesKita Backend provides the API and server-side logic required by the AksesKita web and mobile applications.
-
-The backend handles:
-
-* User authentication and authorization
-* Accessibility report management
-* Image uploads
-* Report comments
-* Report categories
-* Report status workflow
-* Report history tracking
-* Dashboard statistics
-* Pagination, filtering, and searching
-* Role-based access control
+Backend ini melayani permintaan klien dari **AksesKita Web** (Next.js) dan **AksesKita Mobile** (React Native / Expo).
 
 ---
 
-## Tech Stack
+## Daftar Isi
 
-| Technology                     | Purpose                   |
-| ------------------------------ | ------------------------- |
-| Node.js                        | JavaScript runtime        |
-| Express.js                     | REST API framework        |
-| TypeScript                     | Type-safe development     |
-| PostgreSQL                     | Relational database       |
-| JWT                            | Authentication            |
-| Multer                         | Image upload handling     |
-| bcrypt                         | Password hashing          |
-| PostgreSQL functions / queries | Database operations       |
-| dotenv                         | Environment configuration |
-
-The project does not use an ORM. Database queries are handled directly using PostgreSQL.
-
----
-
-## User Roles
-
-### Public User
-
-Regular users can:
-
-* Register and log in
-* Create accessibility reports
-* Upload report images
-* View their own reports
-* View report details
-* Add comments
-* Track report status and history
-
-### Admin
-
-Administrators can:
-
-* View submitted reports
-* Manage report categories
-* Review reports
-* Update report statuses
-* Add administrative comments
-* View dashboard statistics
-
-### Superadmin
-
-Superadmins have additional administrative privileges, including:
-
-* Managing users
-* Changing user roles
-* Managing administrative access
+- [Fitur Utama](#fitur-utama)
+- [Teknologi dan Dependensi](#teknologi-dan-dependensi)
+- [Arsitektur dan Struktur Direktori](#arsitektur-dan-struktur-direktori)
+- [Alur Status Laporan (Report Workflow)](#alur-status-laporan-report-workflow)
+- [Peran Pengguna (Role dan Permissions)](#peran-pengguna-role-dan-permissions)
+- [Panduan Instalasi dan Menjalankan](#panduan-instalasi-dan-menjalankan)
+- [Variabel Lingkungan (.env)](#variabel-lingkungan-env)
+- [Akun Bawaan (Seed Data)](#akun-bawaan-seed-data)
+- [Dokumentasi Endpoint API](#dokumentasi-endpoint-api)
+- [Format Respon Standar](#format-respon-standar)
+- [Deployment dan Production (PM2)](#deployment-dan-production-pm2)
+- [Lisensi](#lisensi)
 
 ---
 
-## Main Features
+## Fitur Utama
 
-### Authentication
+- **Autentikasi dan RBAC (Role-Based Access Control)**:
+  - Autentikasi berbasis JWT (JSON Web Token) dengan hashing kata sandi menggunakan `bcrypt`.
+  - Kontrol akses bertingkat: `user` (pelapor publik), `admin` (petugas/verifikator), dan `super_admin`.
+- **Pelaporan Infrastruktur Berbasis Geospasial**:
+  - Pelaporan detail dengan judul, deskripsi, kategori, koordinat latitude dan longitude, alamat fisik, dan foto bukti lapangan.
+  - Unggah berkas gambar menggunakan `multer` (format JPG, JPEG, PNG, WEBP).
+- **Pelacakan Status dan Audit Trail**:
+  - Alur status tiket laporan (`pending` -> `verified` -> `in_progress` -> `resolved` / `rejected`).
+  - Riwayat perubahan status tercatat di tabel `report_histories` lengkap dengan aktor pengubah dan stempel waktu.
+- **Komentar dan Diskusi Terbuka**:
+  - Pelapor dan pihak admin/petugas dapat bertukar informasi dan kabar terbaru pada setiap tiket laporan.
+- **Notifikasi Otomatis Berbasis Event (In-App Notifications)**:
+  - Memanfaatkan arsitektur `EventEmitter` terpadu: Pelapor otomatis menerima notifikasi in-app ketika status laporan berubah atau terdapat komentar baru.
+- **Statistik dan Metrik Dashboard**:
+  - Agregasi data langsung dari PostgreSQL: total laporan, jumlah per status, kategori yang paling sering dilaporkan, tren laporan per bulan, dan total pengguna.
+- **Keamanan dan Kestabilan**:
+  - Validasi skema permintaan ketat menggunakan `zod` di tingkat middleware.
+  - Proteksi header menggunakan `helmet`, penanganan CORS fleksibel untuk web dan mobile.
+  - Pembatasan tingkat permintaan dengan `express-rate-limit` (1.000 req/15 menit).
+  - Health check endpoint (`/health`) untuk memantau ketersediaan koneksi database dan uptime server.
+  - Logging terstruktur dengan `morgan` dan custom logger stream.
 
-The authentication system uses JWT for secure API access.
+---
 
-Supported functionality:
+## Teknologi dan Dependensi
 
-* User registration
-* User login
-* Password hashing
-* JWT token generation
-* Authentication middleware
-* Role-based authorization
+| Kategori                     | Teknologi                                                                                                            | Deskripsi                                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Runtime & Language** | [Node.js](https://nodejs.org/) & [TypeScript](https://www.typescriptlang.org/)                                         | Eksekusi modern berbasis ESM dengan runtime`tsx`                                        |
+| **Framework**          | [Express 5](https://expressjs.com/)                                                                                   | Web framework performa tinggi generasi terbaru                                            |
+| **Database**           | [PostgreSQL](https://www.postgresql.org/) & [`pg`](https://node-postgres.com/)                                       | Relational database tanpa ORM; menggunakan native Connection Pool & parameterized queries |
+| **Validasi**           | [Zod](https://zod.dev/)                                                                                               | Skema validasi runtime type-safe untuk body, query, dan params                            |
+| **Autentikasi**        | [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) & [bcrypt](https://github.com/kelektiv/node.bcrypt.js)      | Enkripsi kata sandi dan manajemen bearer token JWT                                        |
+| **Upload Media**       | [Multer](https://github.com/expressjs/multer)                                                                         | Pemrosesan upload berkas multipart/form-data ke disk                                      |
+| **Keamanan**           | [Helmet](https://helmetjs.github.io/) & [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit) | Proteksi HTTP headers & mitigasi brute-force/DoS                                          |
+| **Process Manager**    | [PM2](https://pm2.keymetrics.io/)                                                                                     | Cluster mode runner dan auto-restart di production                                        |
 
-Example authentication flow:
+---
+
+## Arsitektur dan Struktur Direktori
+
+Proyek ini menerapkan arsitektur modular berbasis fitur (*Feature-based Modular Architecture*), di mana setiap modul mengelola rute, controller, service, repository SQL, dan skema validasi Zod miliknya sendiri:
 
 ```text
-Register
-   ↓
-Login
-   ↓
-Receive JWT
-   ↓
-Send token with API request
-   ↓
-Authentication Middleware
-   ↓
-Role Middleware
-   ↓
-Protected Resource
-```
-
----
-
-### Accessibility Reports
-
-Users can submit reports containing information about accessibility problems in public areas.
-
-A report may contain:
-
-* Title
-* Description
-* Category
-* Image
-* Latitude
-* Longitude
-* Status
-* Creation date
-
-Reports can also be searched, filtered, and paginated.
-
----
-
-### Report Status
-
-Reports follow a status-based workflow.
-
-Example:
-
-```text
-Pending
-   ↓
-Reviewed
-   ↓
-In Progress
-   ↓
-Resolved
-```
-
-The status history is stored so users and administrators can track changes made to a report.
-
----
-
-### Comments
-
-Users and authorized administrators can communicate through comments attached to reports.
-
-Comments can be used to:
-
-* Provide additional information
-* Ask for clarification
-* Give updates
-* Document administrative actions
-
----
-
-### Categories
-
-Accessibility reports are grouped into categories to make issue management easier.
-
-Administrators can manage available categories through the API.
-
-Example categories:
-
-```text
-Tactile Paving
-Pedestrian Crossing
-Sidewalk
-Road Damage
-Accessibility Signage
-Public Facilities
-Other
-```
-
----
-
-### Dashboard Statistics
-
-The backend provides statistical data that can be used by the administrative dashboard.
-
-Statistics may include:
-
-* Total reports
-* Pending reports
-* In-progress reports
-* Resolved reports
-* Report distribution by category
-* Report distribution by status
-
----
-
-## API Structure
-
-The API is organized into several main resources:
-
-```text
-/api/auth
-/api/users
-/api/reports
-/api/categories
-/api/comments
-/api/dashboard
-/api/histories
-```
-
-Authentication is required for protected endpoints.
-
-Example request:
-
-```http
-Authorization: Bearer <JWT_TOKEN>
-```
-
----
-
-## Project Structure
-
-```text
-akses_kita_be/
+akseskita_be/
 ├── src/
-│   ├── config/
-│   │   ├── database.ts
-│   │   └── env.ts
-│   │
-│   ├── controllers/
-│   │   ├── auth.controller.ts
-│   │   ├── user.controller.ts
-│   │   ├── report.controller.ts
-│   │   ├── category.controller.ts
-│   │   ├── comment.controller.ts
-│   │   └── dashboard.controller.ts
-│   │
-│   ├── middleware/
-│   │   ├── auth.middleware.ts
-│   │   ├── role.middleware.ts
-│   │   └── upload.middleware.ts
-│   │
-│   ├── routes/
-│   │   ├── auth.routes.ts
-│   │   ├── user.routes.ts
-│   │   ├── report.routes.ts
-│   │   ├── category.routes.ts
-│   │   ├── comment.routes.ts
-│   │   └── dashboard.routes.ts
-│   │
-│   ├── services/
-│   │   ├── auth.service.ts
-│   │   ├── user.service.ts
-│   │   ├── report.service.ts
-│   │   ├── category.service.ts
-│   │   └── comment.service.ts
-│   │
-│   ├── database/
-│   │   ├── migrations/
-│   │   ├── queries/
-│   │   └── functions/
-│   │
-│   ├── types/
-│   │   └── index.ts
-│   │
-│   ├── utils/
-│   │   ├── jwt.ts
-│   │   └── response.ts
-│   │
-│   ├── app.ts
-│   └── server.ts
-│
-├── uploads/
-├── .env.example
-├── .gitignore
-├── package.json
-├── tsconfig.json
-└── README.md
+│   ├── config/              # Konfigurasi aplikasi (database, env Zod, logger, multer, rate-limit)
+│   ├── database/            # Setup pool pg, migrasi skema, dan data seeder
+│   │   ├── migrations/      # File SQL mentah berurutan (001 s/d 006)
+│   │   └── seeds/           # Data dummy/inisial (users, categories, reports, comments)
+│   ├── middlewares/         # Middleware global (auth, role, validate Zod, error-handler, 404)
+│   ├── modules/             # Modul fungsional per domain
+│   │   ├── auth/            # Registrasi & login
+│   │   ├── categories/      # Manajemen kategori laporan
+│   │   ├── comments/        # Diskusi dan tanggapan laporan
+│   │   ├── dashboard/       # Agregasi data statistik untuk admin
+│   │   ├── notifications/   # In-app notifications & listeners EventEmitter
+│   │   ├── report-histories/# Log histori perubahan status
+│   │   ├── reports/         # Tiket laporan publik, upload foto, & filter
+│   │   └── users/           # Profil pengguna & manajemen hak akses
+│   ├── routes/              # Central aggregator router Express
+│   ├── shared/              # Utilitas bersama (asyncHandler, response helper, hash, JWT, pagination, events)
+│   ├── types/               # Deklarasi tipe TypeScript global (termasuk express user)
+│   ├── app.ts               # Inisialisasi Express app & middleware stack
+│   └── server.ts            # Entry point server & inisialisasi event notification listeners
+├── uploads/                 # Folder penyimpanan media lokal (laporan & foto profil)
+├── deploy.sh                # Skrip bash otomatisasi deployment server
+├── ecosystem.config.cjs     # Konfigurasi cluster PM2 di server produksi
+├── package.json             # Dependensi & skrip proyek
+├── tsconfig.json            # Konfigurasi TypeScript compiler
+└── .env.example             # Template variabel lingkungan
 ```
 
-> The exact structure may differ depending on the current implementation of the repository.
+---
+
+## Alur Status Laporan (Report Workflow)
+
+Setiap laporan yang dikirimkan oleh pengguna akan melalui siklus hidup status sebagai berikut:
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: Laporan Dikirim (User)
+    pending --> verified: Diverifikasi (Admin/Superadmin)
+    pending --> rejected: Ditolak / Tidak Valid (Admin/Superadmin)
+    verified --> in_progress: Mulai Dikerjakan / Ditindaklanjuti
+    in_progress --> resolved: Masalah Selesai Diperbaiki
+    rejected --> [*]
+    resolved --> [*]
+```
+
+> **Catatan:** Setiap perubahan status dari satu tahap ke tahap lain akan otomatis tercatat ke dalam tabel `report_histories` dan memicu notifikasi kepada pemilik laporan.
 
 ---
 
-## Requirements
+## Peran Pengguna (Role dan Permissions)
 
-Before running the project, make sure the following are installed:
-
-* Node.js
-* npm
-* PostgreSQL
-* Git
+| Fitur / Hak Akses                  |   User (Masyarakat)   | Admin (Petugas) | Super Admin |
+| ---------------------------------- | :--------------------: | :-------------: | :---------: |
+| Registrasi & Login                 |           Ya           |       Ya       |     Ya     |
+| Membuat Laporan & Unggah Foto      |           Ya           |       Ya       |     Ya     |
+| Melihat Laporan Pribadi            |           Ya           |       Ya       |     Ya     |
+| Melihat Seluruh Laporan Publik     | Ya (Hanya data publik) |       Ya       |     Ya     |
+| Memberi Komentar pada Laporan      |           Ya           |       Ya       |     Ya     |
+| Menghapus Komentar Sendiri         |           Ya           |       Ya       |     Ya     |
+| Memperbarui Status Laporan         |         Tidak         |       Ya       |     Ya     |
+| Menghapus Laporan Apapun           |         Tidak         |       Ya       |     Ya     |
+| Mengelola Kategori (CRUD)          |         Tidak         |       Ya       |     Ya     |
+| Mengakses Statistik Dashboard      |         Tidak         |       Ya       |     Ya     |
+| Mengelola Pengguna & Mengubah Role |         Tidak         |      Tidak      |     Ya     |
 
 ---
 
-## Installation
+## Panduan Instalasi dan Menjalankan
 
-Clone the repository:
+### 1. Prasyarat Sistem
+
+- **Node.js**: Versi `18.x` atau lebih baru
+- **PostgreSQL**: Versi `14.x` atau lebih baru
+- **Git**
+
+### 2. Kloning Repositori
 
 ```bash
-git clone <repository-url>
-cd akses_kita_be
+git clone https://github.com/July778-alt/akseskita_be.git
+cd akseskita_be
 ```
 
-Install dependencies:
+### 3. Pasang Dependensi
 
 ```bash
 npm install
 ```
 
----
+### 4. Konfigurasi Database PostgreSQL
 
-## Environment Variables
-
-Create a `.env` file in the root directory.
-
-Example:
-
-```env
-PORT=5000
-
-DATABASE_URL=postgresql://postgres:password@localhost:5432/akses_kita
-
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=7d
-
-UPLOAD_DIR=uploads
-```
-
-Make sure the values match your local PostgreSQL configuration.
-
----
-
-## Database Setup
-
-Create a PostgreSQL database:
+Buka terminal PostgreSQL (psql) atau GUI (pgAdmin / DBeaver), lalu buat database baru:
 
 ```sql
 CREATE DATABASE akses_kita;
 ```
 
-Run the required database migrations or SQL scripts from the project.
+### 5. Salin dan Sesuaikan .env
 
-The database contains resources for:
+Salin template berkas `.env.example` menjadi `.env`:
 
-```text
-users
-reports
-categories
-comments
-report_histories
+```bash
+cp .env.example .env
 ```
 
-Database functions and queries are maintained separately from the application logic.
+Sesuaikan konfigurasi kredensial database PostgreSQL dan JWT secret Anda.
 
----
+### 6. Jalankan Migrasi Skema Database
 
-## Running the Project
+Perintah ini akan mengeksekusi berkas migrasi SQL secara berurutan:
 
-Start the development server:
+```bash
+npm run migrate
+```
+
+### 7. Jalankan Data Awal (Seeding Data)
+
+*(Disarankan untuk lingkungan development/pengujian)*:
+
+```bash
+npm run seed
+```
+
+### 8. Jalankan Server Development
 
 ```bash
 npm run dev
 ```
 
-Build the project:
-
-```bash
-npm run build
-```
-
-Start the production build:
-
-```bash
-npm start
-```
-
-The API will normally be available at:
-
-```text
-http://localhost:5000
-```
+Server akan aktif di: **`http://localhost:5000`** (atau port sesuai konfigurasi `.env`).
 
 ---
 
-## API Authentication
+## Variabel Lingkungan (.env)
 
-After logging in, the client receives a JWT token.
+Berikut adalah daftar variabel lingkungan yang divalidasi oleh `Zod` di `src/config/env.ts`:
 
-Include the token in protected requests:
-
-```http
-Authorization: Bearer YOUR_TOKEN
-```
-
-Example:
-
-```http
-GET /api/reports
-Authorization: Bearer eyJhbGciOiJIUzI1Ni...
-```
+| Variabel           | Tipe Data | Nilai Default             | Keterangan                                                           |
+| ------------------ | --------- | ------------------------- | -------------------------------------------------------------------- |
+| `PORT`           | Number    | `5000`                  | Port listening server HTTP                                           |
+| `NODE_ENV`       | Enum      | `development`           | Lingkungan aplikasi (`development`, `production`, `test`)      |
+| `SERVER_URL`     | URL       | `http://localhost:5000` | URL publik backend (digunakan untuk resolusi path media)             |
+| `CLIENT_URL`     | URL       | **Wajib diisi**     | URL aplikasi frontend (Next.js / Expo) untuk kebijakan CORS          |
+| `DATABASE_URL`   | String    | **Wajib diisi**     | URI koneksi PostgreSQL (`postgresql://user:pass@host:5432/dbname`) |
+| `JWT_SECRET`     | String    | **Wajib diisi**     | Kunci rahasia untuk menandatangani token JWT                         |
+| `JWT_EXPIRES_IN` | String    | `1d`                    | Masa berlaku token JWT (misal:`1d`, `7d`, `24h`)               |
 
 ---
 
-## Example Report Request
+## Akun Bawaan (Seed Data)
 
-Reports containing images use `multipart/form-data`.
+Setelah menjalankan `npm run seed`, Anda dapat langsung masuk menggunakan akun default berikut:
 
-Example fields:
-
-```text
-title
-description
-category_id
-latitude
-longitude
-image
-```
-
-Example:
-
-```http
-POST /api/reports
-Content-Type: multipart/form-data
-Authorization: Bearer YOUR_TOKEN
-```
+| Peran (Role)                | Email                   | Password     | Kegunaan                                                                 |
+| --------------------------- | ----------------------- | ------------ | ------------------------------------------------------------------------ |
+| **Super Admin**       | `admin@akseskita.com` | `admin123` | Akses penuh dashboard, manajemen role user, kategori, dan status laporan |
+| **User (Masyarakat)** | `radit@gmail.com`     | `admin123` | Akun publik untuk menguji alur pembuatan laporan dan komentar            |
 
 ---
 
-## Report Query
+## Dokumentasi Endpoint API
 
-Reports support common query parameters for administration and discovery.
+Base URL API: **`http://localhost:5000/api`**
 
-Example:
-
-```http
-GET /api/reports?page=1&limit=10
-```
-
-Filtering:
+Semua endpoint yang bertanda `[Auth]` membutuhkan header:
 
 ```http
-GET /api/reports?status=pending
+Authorization: Bearer <JWT_TOKEN>
 ```
 
-Searching:
+### 1. Health Check
 
-```http
-GET /api/reports?search=trotoar
-```
-
-The exact available parameters depend on the implemented API version.
+| Method  | Endpoint    | Akses  | Deskripsi                                                          |
+| ------- | ----------- | ------ | ------------------------------------------------------------------ |
+| `GET` | `/health` | Publik | Memeriksa ketersediaan koneksi database PostgreSQL & uptime server |
 
 ---
 
-## API Response Format
+### 2. Autentikasi (/api/auth)
 
-Successful responses generally return JSON.
+| Method   | Endpoint               | Akses  | Body Request / Keterangan                                        |
+| -------- | ---------------------- | ------ | ---------------------------------------------------------------- |
+| `POST` | `/api/auth/register` | Publik | `{ full_name, email, password }`                               |
+| `POST` | `/api/auth/login`    | Publik | `{ email, password }` -> Mengembalikan token JWT & profil user |
 
-Example:
+---
+
+### 3. Pengguna (/api/users)
+
+| Method     | Endpoint                | Akses              | Deskripsi                                                                            |
+| ---------- | ----------------------- | ------------------ | ------------------------------------------------------------------------------------ |
+| `GET`    | `/api/users/me`       | Auth               | Mengambil detail profil pengguna saat ini                                            |
+| `PUT`    | `/api/users/me`       | Auth               | Update nama (`full_name`) dan foto profil (`multipart: avatar`)                  |
+| `GET`    | `/api/users`          | Admin, Super Admin | Mengambil daftar pengguna (dukungan query:`page`, `limit`, `search`, `role`) |
+| `DELETE` | `/api/users/:id`      | Admin, Super Admin | Menghapus akun pengguna berdasarkan UUID                                             |
+| `PATCH`  | `/api/users/:id/role` | Super Admin        | Mengubah peran pengguna (`role`: `user` \| `admin` \| `super_admin`)         |
+
+---
+
+### 4. Kategori Laporan (/api/categories)
+
+| Method     | Endpoint                | Akses              | Deskripsi                                      |
+| ---------- | ----------------------- | ------------------ | ---------------------------------------------- |
+| `GET`    | `/api/categories`     | Publik             | Mengambil semua kategori laporan yang tersedia |
+| `POST`   | `/api/categories`     | Admin, Super Admin | Membuat kategori baru (`{ name }`)           |
+| `PUT`    | `/api/categories/:id` | Admin, Super Admin | Memperbarui nama kategori                      |
+| `DELETE` | `/api/categories/:id` | Admin, Super Admin | Menghapus kategori                             |
+
+---
+
+### 5. Laporan Aksesibilitas (/api/reports)
+
+| Method     | Endpoint                       | Akses              | Deskripsi                                                                                                                                              |
+| ---------- | ------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET`    | `/api/reports`               | Publik / Auth      | Mengambil daftar laporan (dukungan query:`page`, `limit`, `status`, `category_id`, `search`, `sort`)                                       |
+| `GET`    | `/api/reports/:id`           | Publik             | Mengambil detail laporan lengkap berdasarkan ID                                                                                                        |
+| `POST`   | `/api/reports`               | Auth               | Membuat laporan baru (**multipart/form-data**: `title`, `description`, `category_id`, `latitude`, `longitude`, `address`, `image`) |
+| `DELETE` | `/api/reports/:id`           | Auth               | Menghapus laporan (Hanya pemilik laporan atau Admin/Super Admin)                                                                                       |
+| `PATCH`  | `/api/reports/:id/status`    | Admin, Super Admin | Mengubah status laporan (`status`: `pending` \| `verified` \| `in_progress` \| `resolved` \| `rejected`)                                   |
+| `GET`    | `/api/reports/:id/histories` | Publik             | Melihat riwayat kronologis perubahan status tiket laporan                                                                                              |
+
+---
+
+### 6. Komentar & Tanggapan (/api)
+
+| Method     | Endpoint                            | Akses         | Deskripsi                                             |
+| ---------- | ----------------------------------- | ------------- | ----------------------------------------------------- |
+| `GET`    | `/api/reports/:reportId/comments` | Publik / Auth | Mengambil seluruh komentar pada suatu tiket laporan   |
+| `POST`   | `/api/reports/:reportId/comments` | Auth          | Mengirim komentar baru pada laporan (`{ message }`) |
+| `DELETE` | `/api/comments/:id`               | Auth          | Menghapus komentar (Hanya pemilik komentar)           |
+
+---
+
+### 7. Notifikasi In-App (/api/notifications)
+
+| Method     | Endpoint                             | Akses | Deskripsi                                           |
+| ---------- | ------------------------------------ | ----- | --------------------------------------------------- |
+| `GET`    | `/api/notifications`               | Auth  | Mengambil daftar notifikasi milik pengguna saat ini |
+| `PATCH`  | `/api/notifications/mark-all-read` | Auth  | Menandai seluruh notifikasi telah dibaca            |
+| `PATCH`  | `/api/notifications/:id/read`      | Auth  | Menandai satu notifikasi tertentu telah dibaca      |
+| `DELETE` | `/api/notifications/clear-all`     | Auth  | Menghapus seluruh riwayat notifikasi pengguna       |
+| `DELETE` | `/api/notifications/:id`           | Auth  | Menghapus satu notifikasi tertentu                  |
+
+---
+
+### 8. Dashboard Statistik (/api/dashboard)
+
+| Method  | Endpoint           | Akses              | Deskripsi                                                                                                     |
+| ------- | ------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `GET` | `/api/dashboard` | Admin, Super Admin | Mengambil metrik: total laporan, rincian status, kategori terpopuler, grafik tren bulanan, dan total pengguna |
+
+---
+
+## Format Respon Standar
+
+Aplikasi menggunakan format JSON seragam untuk mempermudah integrasi frontend:
+
+### Contoh Respon Sukses (200 / 201)
 
 ```json
 {
   "success": true,
-  "message": "Report retrieved successfully",
-  "data": {}
+  "message": "Reports retrieved",
+  "data": [
+    {
+      "id": "c1f7a224-...",
+      "title": "Guiding Block Hancur di Depan Halte",
+      "description": "Jalur pemandu tuna netra terputus dan rusak parah.",
+      "status": "pending",
+      "image_url": "uploads/reports/171123456789.jpg",
+      "latitude": -6.200000,
+      "longitude": 106.816666,
+      "address": "Jl. Sudirman No. 10",
+      "created_at": "2026-10-01T10:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 45,
+    "total_pages": 5
+  }
 }
 ```
 
-Error example:
+### Contoh Respon Gagal Validasi Zod (400)
 
 ```json
 {
   "success": false,
-  "message": "Unauthorized"
+  "message": "Validation failed",
+  "errors": {
+    "email": ["Invalid email address"],
+    "password": ["Password must be at least 6 characters"]
+  }
 }
 ```
 
 ---
 
-## Security
+## Deployment dan Production (PM2)
 
-The backend applies several security mechanisms:
+Repositori ini sudah dilengkapi konfigurasi cluster PM2 di `ecosystem.config.cjs` serta skrip `deploy.sh`.
 
-* Password hashing with bcrypt
-* JWT-based authentication
-* Role-based authorization
-* Protected administrative endpoints
-* Environment-based secret configuration
-* Input validation
-* Restricted file upload handling
+### Menjalankan dengan PM2:
 
-Sensitive configuration such as JWT secrets and database credentials should never be committed to the repository.
+```bash
+# Menjalankan backend dalam mode cluster production
+pm2 start ecosystem.config.cjs --env production
 
----
+# Melihat log aplikasi
+pm2 logs akseskita-backend
 
-## Development Flow
-
-The backend is consumed by both AksesKita clients:
-
-```text
-                ┌──────────────────┐
-                │   AksesKita Web  │
-                │     Next.js      │
-                └────────┬─────────┘
-                         │
-                         │ REST API
-                         ▼
-                ┌──────────────────┐
-                │ AksesKita Backend│
-                │    Express.js    │
-                │   TypeScript     │
-                └────────┬─────────┘
-                         │
-                         ▼
-                ┌──────────────────┐
-                │    PostgreSQL    │
-                └──────────────────┘
-                         ▲
-                         │
-                         │ REST API
-                ┌────────┴─────────┐
-                │ AksesKita Mobile │
-                │ React Native     │
-                │     + Expo       │
-                └──────────────────┘
+# Memantau performa CPU/RAM
+pm2 monit
 ```
 
----
+### Otomatisasi Deployment (Server Linux/VPS):
 
-## Related Projects
-
-### AksesKita Web
-
-Frontend application for users and administrators.
-
-```text
-Next.js + TypeScript
+```bash
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-### AksesKita Mobile
+Skrip `deploy.sh` akan otomatis:
 
-Mobile application focused on the user experience.
-
-```text
-React Native + Expo
-```
-
----
-
-## Project Goals
-
-AksesKita aims to provide a centralized platform for reporting and documenting accessibility issues in public spaces.
-
-The project focuses on making accessibility problems easier to report, organize, monitor, and communicate between the public and administrators.
+1. Menarik commit terbaru dari branch `main` (`git pull origin main`)
+2. Memasang dependensi (`npm install`)
+3. Menjalankan migrasi database (`npm run migrate`)
+4. Memuat ulang instans PM2 tanpa downtime (`pm2 restart ecosystem.config.cjs --env production`)
 
 ---
 
-## Author
+## Lisensi
 
-**Radit**
-
-RPL Student & Frontend Developer
-
----
-
-## License
-
-This project was created as part of a school project and learning portfolio.
+Proyek ini dikembangkan sebagai bagian dari inisiatif portofolio rekayasa perangkat lunak (RPL) dan platform kepedulian aksesibilitas publik AksesKita.
+Didistribusikan di bawah lisensi [ISC](LICENSE).
