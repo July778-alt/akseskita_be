@@ -1,12 +1,5 @@
 # AksesKita Backend (REST API)
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-68a063?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![JWT](https://img.shields.io/badge/JWT-Secure_Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
-[![PM2](https://img.shields.io/badge/PM2-Cluster_Ready-2B037A?style=for-the-badge&logo=pm2&logoColor=white)](https://pm2.keymetrics.io/)
-
 Backend RESTful API untuk **AksesKita** — platform pelaporan fasilitas publik dan infrastruktur ramah disabilitas/aksesibilitas kota (seperti guiding block/tactile paving rusak, trotoar tidak layak, jalan berlubang, lampu penyeberangan mati, ramp kursi roda, dan fasilitas publik lainnya).
 
 Backend ini melayani permintaan klien dari **AksesKita Web** (Next.js) dan **AksesKita Mobile** (React Native / Expo).
