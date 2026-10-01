@@ -100,25 +100,6 @@ akseskita_be/
 
 ---
 
-## Alur Status Laporan (Report Workflow)
-
-Setiap laporan yang dikirimkan oleh pengguna akan melalui siklus hidup status sebagai berikut:
-
-```mermaid
-stateDiagram-v2
-    [*] --> pending: Laporan Dikirim (User)
-    pending --> verified: Diverifikasi (Admin/Superadmin)
-    pending --> rejected: Ditolak / Tidak Valid (Admin/Superadmin)
-    verified --> in_progress: Mulai Dikerjakan / Ditindaklanjuti
-    in_progress --> resolved: Masalah Selesai Diperbaiki
-    rejected --> [*]
-    resolved --> [*]
-```
-
-> **Catatan:** Setiap perubahan status dari satu tahap ke tahap lain akan otomatis tercatat ke dalam tabel `report_histories` dan memicu notifikasi kepada pemilik laporan.
-
----
-
 ## Peran Pengguna (Role dan Permissions)
 
 | Fitur / Hak Akses                  |   User (Masyarakat)   | Admin (Petugas) | Super Admin |
@@ -332,25 +313,8 @@ Aplikasi menggunakan format JSON seragam untuk mempermudah integrasi frontend:
 {
   "success": true,
   "message": "Reports retrieved",
-  "data": [
-    {
-      "id": "c1f7a224-...",
-      "title": "Guiding Block Hancur di Depan Halte",
-      "description": "Jalur pemandu tuna netra terputus dan rusak parah.",
-      "status": "pending",
-      "image_url": "uploads/reports/171123456789.jpg",
-      "latitude": -6.200000,
-      "longitude": 106.816666,
-      "address": "Jl. Sudirman No. 10",
-      "created_at": "2026-10-01T10:00:00.000Z"
-    }
-  ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 45,
-    "total_pages": 5
-  }
+  "data": [...],
+  "meta": {...}
 }
 ```
 
@@ -360,49 +324,5 @@ Aplikasi menggunakan format JSON seragam untuk mempermudah integrasi frontend:
 {
   "success": false,
   "message": "Validation failed",
-  "errors": {
-    "email": ["Invalid email address"],
-    "password": ["Password must be at least 6 characters"]
-  }
-}
+  "errors": {...}}
 ```
-
----
-
-## Deployment dan Production (PM2)
-
-Repositori ini sudah dilengkapi konfigurasi cluster PM2 di `ecosystem.config.cjs` serta skrip `deploy.sh`.
-
-### Menjalankan dengan PM2:
-
-```bash
-# Menjalankan backend dalam mode cluster production
-pm2 start ecosystem.config.cjs --env production
-
-# Melihat log aplikasi
-pm2 logs akseskita-backend
-
-# Memantau performa CPU/RAM
-pm2 monit
-```
-
-### Otomatisasi Deployment (Server Linux/VPS):
-
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-Skrip `deploy.sh` akan otomatis:
-
-1. Menarik commit terbaru dari branch `main` (`git pull origin main`)
-2. Memasang dependensi (`npm install`)
-3. Menjalankan migrasi database (`npm run migrate`)
-4. Memuat ulang instans PM2 tanpa downtime (`pm2 restart ecosystem.config.cjs --env production`)
-
----
-
-## Lisensi
-
-Proyek ini dikembangkan sebagai bagian dari inisiatif portofolio rekayasa perangkat lunak (RPL) dan platform kepedulian aksesibilitas publik AksesKita.
-Didistribusikan di bawah lisensi [ISC](LICENSE).
